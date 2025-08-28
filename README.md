@@ -20,44 +20,44 @@ The manager can choose to order offshore to a long lead time supplier, or to dev
 Trial and errors make the tradeoff between lower unit cost and longer delay very palpable.
 
 --------------------------------------------------
-Instructions:
+## Instructions:
 
-¤ Read the introduction of the game :
+### Read the introduction of the game :
 
-	You are a ski jacket retailer.
-	You sell 2 different models, one is fashionable, overstock at the end of a season is lost.
-	The other one is standard, overstock can be stored (at a cost) and sold on next season.
-	You can choose to produce on your own local factory, or to outsource offshore.
-	Demand is only known after the season has started.
-	Offshore, you must order 4 months before the season beginning, so with unknown demand.
-	Locally you can produce during the season, so with a known real demand.
-	Use the clock on the right to keep track of the stage that's currently active.
+-	You are a ski jacket retailer.
+-	You sell 2 different models, one is fashionable, overstock at the end of a season is lost.
+-	The other one is standard, overstock can be stored (at a cost) and sold on next season.
+-	You can choose to produce on your own local factory, or to outsource offshore.
+-	Demand is only known after the season has started.
+-	Offshore, you must order 4 months before the season beginning, so with unknown demand.
+-	Locally you can produce during the season, so with a known real demand.
+-	Use the clock on the right to keep track of the stage that's currently active.
 
-¤ The game starts in period 1, pointer of the clock on "LLT Order" (LLT=Long Lead Time=Offshore factory)
+### The game starts in period 1, pointer of the clock on "LLT Order" (LLT=Long Lead Time=Offshore factory)
 
-	Place your offshore orders for both of the jackets.
-	The cost per unit for each is indicated in the "Offshore" box (top left).
-	You have no information about demand.
-	Also, you can manage your local capacity, the production capacity you will have in period 2.
-	Increasing capacity just adds fixed costs, but getting rid of capacity is quite expensive.
-	Press the [Enter] key of your keyboard to validate your choices.
+-	Place your offshore orders for both of the jackets.
+-	The cost per unit for each is indicated in the "Offshore" box (top left).
+-	You have no information about demand.
+-	Also, you can manage your local capacity, the production capacity you will have in period 2.
+-	Increasing capacity just adds fixed costs, but getting rid of capacity is quite expensive.
+-	Press the [Enter] key of your keyboard to validate your choices.
 
-¤ Then comes period 2, pointer of the clock on "SLT Order" (SLT=Short Lead Time=Local factory)
+### Then comes period 2, pointer of the clock on "SLT Order" (SLT=Short Lead Time=Local factory)
 
-	Place your local orders for both of the jackets.
-	The cost per unit for each is indicated in the "Local" box (top right).
-	Notice that you now know the demand (second line of the central table or "Shop" box).
-	You can then complete your LLT orders to meet the demand.
-	But your local capacity is limited to what you chose in period 1.
-	Press the [Enter] key of your keyboard to validate your choice.
+-	Place your local orders for both of the jackets.
+-	The cost per unit for each is indicated in the "Local" box (top right).
+-	Notice that you now know the demand (second line of the central table or "Shop" box).
+-	You can then complete your LLT orders to meet the demand.
+-	But your local capacity is limited to what you chose in period 1.
+-	Press the [Enter] key of your keyboard to validate your choice.
 
-¤ Then comes period 3, pointer of the clock on "Results"
+### Then comes period 3, pointer of the clock on "Results"
 
-	You can now analyze the full result of the season in the central table.
-	Press the [Enter] key of your keyboard to start a new season.
+-	You can now analyze the full result of the season in the central table.
+-	Press the [Enter] key of your keyboard to start a new season.
 	
-¤ Advices
+### Advices
 
-	Think twice about the margins you make on each of the 2 products. Which one should be your priority ?
-	Consider what you lose by ordering without knowing the demand.
-	Consider the increase of your local capacity as an investment to improve your flexibility & reduce your mismatch costs.
+-	Think twice about the margins you make on each of the 2 products. Which one should be your priority ?
+-	Consider what you lose by ordering without knowing the demand.
+-	Consider the increase of your local capacity as an investment to improve your flexibility & reduce your mismatch costs.
