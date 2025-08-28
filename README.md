@@ -23,6 +23,7 @@ Trial and errors make the tradeoff between lower unit cost and longer delay very
 Instructions:
 
 ¤ Read the introduction of the game :
+
 	You are a ski jacket retailer.
 	You sell 2 different models, one is fashionable, overstock at the end of a season is lost.
 	The other one is standard, overstock can be stored (at a cost) and sold on next season.
@@ -33,6 +34,7 @@ Instructions:
 	Use the clock on the right to keep track of the stage that's currently active.
 
 ¤ The game starts in period 1, pointer of the clock on "LLT Order" (LLT=Long Lead Time=Offshore factory)
+
 	Place your offshore orders for both of the jackets.
 	The cost per unit for each is indicated in the "Offshore" box (top left).
 	You have no information about demand.
@@ -41,6 +43,7 @@ Instructions:
 	Press the [Enter] key of your keyboard to validate your choices.
 
 ¤ Then comes period 2, pointer of the clock on "SLT Order" (SLT=Short Lead Time=Local factory)
+
 	Place your local orders for both of the jackets.
 	The cost per unit for each is indicated in the "Local" box (top right).
 	Notice that you now know the demand (second line of the central table or "Shop" box).
@@ -49,10 +52,12 @@ Instructions:
 	Press the [Enter] key of your keyboard to validate your choice.
 
 ¤ Then comes period 3, pointer of the clock on "Results"
+
 	You can now analyze the full result of the season in the central table.
 	Press the [Enter] key of your keyboard to start a new season.
 	
 ¤ Advices
+
 	Think twice about the margins you make on each of the 2 products. Which one should be your priority ?
 	Consider what you lose by ordering without knowing the demand.
 	Consider the increase of your local capacity as an investment to improve your flexibility & reduce your mismatch costs.
