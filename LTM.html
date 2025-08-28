@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>	<meta charset="utf-8"><title>Lead Time Manager</title>  
+<style type="text/css">
+	body 	  	{color: black;	background-color: #FFFFFF; font-family: Helvetica;}	
+	table 	  	{width: 100%; border:1px solid #FFF;	border-collapse:collapse;} 
+	.demo 	 	{border:1px solid #000;}
+	.demo td  	{border:1px solid #000;}
+	.maintab	{border:1px solid #FF0000;	border-collapse:collapse; margin-left:5%;}
+	.maintab td	{border:1px solid #000; text-align:left;}
+	td 			{text-align:center;} 
+	canvas 		{margin-left: 0%;}
+	.bout1		{background-color:LightSkyBlue; height:22px; width:60px; font-size:80%;  border:0px solid black;}
+	.bout2		{background-color:Yellow;  width:100px; font-size:90%;  border:0px solid black; }
+	@keyframes 	cligno {0% {background-color:LightSkyBlue;}	50% {background-color:white;}		100% {background-color:LightSkyBlue;}}
+	div#cligno	{animation-name: cligno;   animation-duration: 2s; animation-iteration-count: 900;}
+	p			{text-align: left; margin-top: 0em; margin-bottom: 0em;}
+	div.f2 		{text-align:center;}
+	div.f3 		{float: right; margin-right: 10px;}
+</style>
+
+<script type="text/javascript">
+var period=0; var year=1; start = new Date().getTime();	t=0;	Limited=1;
+document.addEventListener('keypress', function (e) {var key = e.keyCode; if (key == 13) {  OneMoreTime();  }});
+
+function OneMoreTime()						{if(new Date().getTime() - start > 500 || t>5) {period++; textblock=0; if(period==4){period=1; year++;}       if(period==1){set("CENTER",""); step1();} 	if(period==2){getLT(); set("LLTo",""); step2();}	if(period==3){getST(); set("SLTo",""); step3();}  start = new Date().getTime();} else{t++;}  set("LSD",year);	set("BSD",period);}
+function set(a,b)							{document.getElementById(a).innerHTML=b;}
+function uncheck(a)							{document.getElementById(a).checked = false;}
+function Clean(c,w,h) 						{c.fillStyle = "white";	c.fillRect (0, 0,w,h);}
+function Rectangle(c,x,y,l,h)				{c.fillRect (x,y,l,h);}
+function Triangle(c,x1,y1,x2,y2,x3,y3)		{c.beginPath();	c.moveTo(x1,y1);	c.lineTo(x2,y2);	c.lineTo(x3,y3);	c.fill();}
+function Boat(c,w,h)						{Rectangle(c,xboat,h*0.4,w*0.2,h*0.4);			Triangle(c,xboat,h*0.4,xboat-w*0.1,h*0.4,xboat,h*0.8);			Triangle(c,xboat+w*0.2,h*0.4,xboat+w*0.3,h*0.4,xboat+w*0.2,h*0.8);}
+
+
+Capa_LT=1000;   Capa_ST=25;		// Offshore and local capacities
+Money=15000;					// Money at the beginning
+FixCost=30;						// Fixed Costs per unit of capacity
+StorCost=5; 					// Storage Cost per unit per year
+CarbonFP=0;		Lost=0; 		SurplusCost=0;									// Variables used for long term calculations
+Motemp=0;		textblock=0;	XLSized=0;		Temp_LT_FJ=0;   Temp_LT_SJ=0;	// Variables used for events
+
+var NF= [0,31,35,47,60,84,91,99,100,114,126,129,176,189,235,278];																					// Set of values for Fashion Demand
+var NS= [0,137,142,151,160,161,187,193,200,216,229,233,235,240,276,300];																			// Set of values for Standard Demand
+var DF= [0];	var DS= [0];	var RecLF=[];	var RecLS=[];	var RecSF=[];	var RecSS=[];	var RecCa=[];									// Record Tables
+var X= [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];	m=1;																								// Randomly building the
+do{i=Math.round(Math.random()*14+1);	if(X[i]==0){DF[m]=NF[i]; m++;}	X[i]=1;		sum=0;	for(i=1;i<16;i++){sum+=X[i];}	}while(sum<15);		// Fashion demand table
+var X= [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];	m=1;																								// Randomly building the
+do{i=Math.round(Math.random()*14+1);	if(X[i]==0){DS[m]=NS[i]; m++;}	X[i]=1;		sum=0;	for(i=1;i<16;i++){sum+=X[i];}	}while(sum<15);		// Standard demand table
+
+INP1="<table style=\"width:400px;\"><tr><td colspan=\"2\"><b>Long Lead Time Order</b></td><td></td></tr><tr><td>Fashion Jacket</td><td><input id=\"CMD_LLT_FJ\" type=\"text\"  size=\"5\"></td><td rowspan=\"2\"><div id=\"cligno\" onclick=\"OneMoreTime();\"><p style=\"font-size:9px; \">Set your Capacity<br>Place your order &</p>Validate</div></td></tr><tr><td>Standard Jacket</td><td><input id=\"CMD_LLT_SJ\" type=\"text\"  size=\"5\"></td><td></td></tr><tr><td>Local Capacity</td><td style=\"width:80px; background-color:LightSkyBlue; border:1px solid #FFF;\" onclick=\"cap(1);\">+25<p style=\"font-size:10px; \">Cost 0€ <br>Fix.Costs +750€</p></td><td style=\"width:80px; background-color:LightSkyBlue; border:1px solid #FFF;\" onclick=\"cap(0);\">-25<p style=\"font-size:10px; \">Cost 500€ <br>Fix.Costs -750€</p></td></tr></table>";
+INP2="<table style=\"width:400px;\"><tr><td colspan=\"2\"><b>Short Lead Time Order</b></td><td></td></tr><tr><td>Fashion Jacket</td><td><input id=\"CMD_SLT_FJ\" type=\"text\"  size=\"5\"></td><td rowspan=\"2\"><div id=\"cligno\" onclick=\"OneMoreTime();\"><p style=\"font-size:9px; \">Place your order &<br>&nbsp</p>Validate</div></td></tr><tr><td>Standard Jacket</td><td><input id=\"CMD_SLT_SJ\" type=\"text\"  size=\"5\"></td><td></td></tr></table>";
+INP3="<table style=\"width:200px;\"><tr><td><div id=\"cligno\" onclick=\"OneMoreTime();\"><p style=\"font-size:9px; \">Check your results &<br>&nbsp</p>Validate</div></td></tr></table>";
+INP4="<table style=\"width:200px;\"><tr><td><div id=\"cligno\" onclick=\"OneMoreTime();\">&nbsp<br>Start<br>&nbsp</div></td></tr></table>";
+INP5="<table style=\"width:400px;\"><tr><td colspan=\"2\"><b>Short Lead Time Order</b></td><td></td></tr><tr><td><span id=\"NAME\">Custom Jacket</span></td><td><input id=\"CMD_SLT_CJ\" type=\"text\"  size=\"5\"></td><td rowspan=\"2\"><div id=\"cligno\" onclick=\"OneMoreTime();\"><p style=\"font-size:9px; \">Place your order &<br>&nbsp</p>Validate</div></td></tr><tr><td>Fashion Jacket</td><td><input id=\"CMD_SLT_FJ\" type=\"text\"  size=\"5\"></td><td></td></tr><tr><td>Standard Jacket</td><td><input id=\"CMD_SLT_SJ\" type=\"text\"  size=\"5\"></td><td></td></tr></table>";
+
+
+function Jacket(COL,COS,PRI,SAL,MEA,STD,GRO) {
+	this.demand	  	= 100;
+	this.stock    	= 0;	
+	this.supLT		= 0;
+	this.supST		= 0;
+	this.avail		= 0;
+	this.sold		= 0;
+	this.revenue	= 0;
+	this.storcost	= 0;
+	this.fixcost	= 0;
+	this.costLT		= 0;
+	this.costST		= 0;
+	this.totcost	= 0;
+	this.result		= 0;
+	this.COLT		= COL;
+	this.COST		= COS;
+	this.PRICE		= PRI;
+	this.SALVAGE	= SAL;
+	this.MEAN		= MEA;
+	this.STDEV		= STD;
+	this.GROWTH		= GRO;
+	this.GetDemand	= GetDemand;
+	this.CostCalc	= CostCalc;
+	this.Sales		= Sales;
+	this.StockMGMT  = StockMGMT;
+}
+
+
+function CostCalc(){													//Cost calculation based on the supply and other costs
+	this.sold=Math.min(this.demand,this.avail);							// Sold units
+	this.revenue=Math.round(this.sold*this.PRICE); 						// Earnings
+	this.costLT=Math.round(this.supLT*this.COLT);						// Costs from the long lead time order
+	this.costST=Math.round(this.supST*this.COST);						// Costs from the short lead time order
+	this.totcost=this.costLT+this.costST+this.storcost+this.fixcost;	// Total costs, orders + fixed + storage
+	this.result=this.revenue-this.totcost;								// Result of the year
+}
+
+function Sales(){														//Compute availability and storage costs
+	this.avail=this.stock+this.supLT+this.supST; 						// Availability
+	this.storcost=Math.round(this.stock*StorCost);						// Storage costs
+}
+
+function StockMGMT(){  													//Stock Management, only used for Standard jackets
+	Pastock=Standard.stock;												// Memory of the stock before operations
+	Standard.stock=Math.max(0,Standard.avail-Standard.demand);			// Determination of the stock after operations
+	SalvageMalus=(this.PRICE-this.SAL)*(Pastock-Standard.stock);		// Calcul of the value lost due to sale at salvage price
+	Standard.revenue-=SalvageMalus;										// Substraction of the salvage loss to earnings
+}
+
+function Sustainability(){												//Long-term eco-performance indicators
+	CarbonFP+=Math.round(1.84*(Fashion.supLT+Standard.supLT));			// Carbon footprint     
+	Lost+=(Fashion.avail-Fashion.sold);									// Lost units
+	set("CAR",CarbonFP);	set("WAS",Lost);							// Display carbon footprint and lost units in head table
+	SurplusCost+=Math.round(3*(Fashion.supLT+Standard.supLT));			// Cost surplus for accountant event
+}
+
+function Record(){														//Record the parameters in the tables if we're in Limited mode
+	RecLF[year]=Fashion.supLT;	RecLS[year]=Standard.supLT;	RecSF[year]=Fashion.supST;	RecSS[year]=Standard.supST;	RecCa[year]=Capa_ST;
+}
+
+function Over(){
+	TextOver= "Game is over. <br> Money: "+Money+"<br>CO2: "+CarbonFP+"<br><br> Track of your decisions :<br>";
+	TextOver+="<table class=\"demo\"><tr><td>year</td><td>LLT Fashion</td><td>LLT Standard</td><td>SLT Fashion</td><td>SLT Standard</td><td>Local Capa</td></tr>";
+	for(i=1;i<16;i++){TextOver+="<tr><td>"+i+"<td>"+RecLF[i]+"</td><td>"+RecLS[i]+"</td><td>"+RecSF[i]+"</td><td>"+RecSS[i]+"</td><td>"+RecCa[i]+"</td></tr>";}
+	TextOver+="</table>";
+	set("Test",TextOver);
+}
+	
+
+function GetDemand(){							//Generate demand for a turn
+	MeanY=this.MEAN+(h*this.GROWTH);
+	this.demand=Math.exp(((Math.random()*2-1)+(Math.random()*2-1)+(Math.random()*2-1))*this.STDEV+MeanY);
+	this.demand=Math.round(this.demand);	if(this.demand<0){this.demand=0;}
+}
+
+function ClearTable(){							//Clear the main Table
+	set("NAC","");	set("MON",Money+"€");
+	set("DES","?");	set("HDS","?");	set("SLS","");	set("SSS","");	set("AVS","");	set("SOS","");	set("SDS","");	set("CLS","");	set("CSS","");	set("TCS","");	set("RES","");	set("STS",Standard.stock);	set("SCS","");
+	set("DEF","?");	set("HDF","?");	set("SLF","");	set("SSF","");	set("AVF","");	set("SOF","");	set("SDF","");	set("CLF","");	set("CSF","");	set("TCF","");	set("REF","");	set("FCF",Fashion.fixcost+"&euro;");
+	set("DEC","");					set("SSC","");	set("AVC","");	set("SOC","");					set("CSC","");					set("TCC","");	set("REC","");
+}
+	
+function SetTable(){							//Display the results in the main Table
+	set("AVS",Standard.avail);	set("SCS",Standard.storcost+"&euro;");		set("SOS",Standard.sold);		set("SDS","("+Standard.revenue+"&euro;)");	set("CLS",Standard.costLT+"&euro;");	set("CSS",Standard.costST+"&euro;");	set("TCS",Standard.totcost+"&euro;");	set("RES",Standard.result+"&euro;");
+	set("AVF",Fashion.avail);	set("FCF",Fashion.fixcost+"&euro;");		set("SOF",Fashion.sold);		set("SDF","("+Fashion.revenue+"&euro;)");	set("CLF",Fashion.costLT+"&euro;");		set("CSF",Fashion.costST+"&euro;");		set("TCF",Fashion.totcost+"&euro;");	set("REF",Fashion.result+"&euro;");
+	set("MON",Money+"€");
+}	
+function SetTableCustom() {set("SSC",Custom.supST); set("AVC",Custom.avail);	set("SOC",Custom.sold+"&nbsp"+"("+Custom.revenue+"&euro;)");	set("CSC",Custom.costST+"&euro;");	set("TCC",Custom.totcost+"&euro;");set("REC",Custom.result+"&euro;");}
+	
+	
+function HeadTab(){								//Display prices, costs, capacities and demand in the head table
+	set("HLF",Fashion.COLT);	set("HLS",Standard.COLT);	set("HLC",Capa_LT);
+	set("HPF",Fashion.PRICE);	set("HPS",Standard.PRICE);	set("HDF",Fashion.demand);		set("HDS",Standard.demand);
+	set("HS1",Fashion.COST);	set("HS2",Standard.COST);	set("HS3",FixCost);				set("HS4",FixCost);	set("HSC",Capa_ST);
+}
+
+
+
+function init()	{	
+	set("can3","<canvas style=\"display:block\" id=\"canvas3\" width=\""+window.innerWidth*0.16+"px\" height=\""+window.innerHeight*0.075+"px\" ></canvas>");
+	set("can4","<canvas style=\"display:block\" id=\"canvas4\" width=\""+window.innerWidth*0.08+"px\" height=\""+window.innerHeight*0.075+"px\" ></canvas>");
+	xboat=0; xparcel=0; dir=0;								// Faviables used to control moving elements of the canvas
+	set("CENTER",INP4);  									// Display the start button
+	Fashion  = new Jacket(40,20,100,0,4.6,0.4,0);			// Fashion  Jacket: LLT Cost, SLT Cost, Selling Price, Salvage Value, Mean Demand, Stdev Demand, Growth
+	Standard = new Jacket(30,10,60,40,5.3,0.2,0);			// Standard Jacket: LLT Cost, SLT Cost, Selling Price, Salvage Value, Mean Demand, Stdev Demand, Growth
+	Custom   = new Jacket(0,30,200,0,0,0,0);				// Custom Jacket
+	Fashion.fixcost=FixCost*Capa_ST;						// Set the fixed costs according to the global variable FixCost
+	drawShape();											// Start the drawing loop
+	HeadTab();												// Display prices, costs, capacities and demand infos in the head table
+	ClearTable(); 											// Clean the main table
+	texte(1); 												// Display the introduction text in the textbox
+}
+
+
+
+function cap(a){																								//Manage local capacity with input buttons
+	if(a==1)				{Capa_ST=Capa_ST+25;}																// Increase local capacity
+	if(a==0 && Capa_ST>0)	{Capa_ST=Capa_ST-25;	Money=Money-500; set("MON",Money);}							// Decrease local capacity, costs 500
+	Fashion.fixcost=FixCost*Capa_ST;  set("FCF",Fashion.fixcost+"&euro;");										// Set the fixed cost depending on local capacity
+	set("HSC",Capa_ST);																							// Update the head table with the new capacity
+}
+
+function getInput(a){																							//Get and check user input from user
+	if(document.getElementById(a)== null){input=0;}																// Check if the input exists
+	else {input=document.getElementById(a).value;}																// Get the input from the HTML
+	if(input == "" || isNaN(input)==true){input=0;}	input=parseInt(input);										// Check validity of the input and parse it
+	return input;																								// Return valid input
+}
+
+function getLT(){																								//Get the Long Lead Time Order
+	Fashion.supLT = getInput("CMD_LLT_FJ");																		// Get input value
+	Standard.supLT= getInput("CMD_LLT_SJ");																		// Get input value 
+	Motemp=Math.max(0, Money);																					// Virtual available money
+	Fashion.supLT =Math.min(Fashion.supLT,Capa_LT,Math.floor(Motemp/Fashion.COLT));								// Constraints (Money and Capacity)			
+	Motemp=Motemp-Fashion.supLT*Fashion.COLT;	 																// Update virtual available money
+	Standard.supLT=Math.min(Standard.supLT,Capa_LT-Fashion.supLT,Math.floor(Motemp/Standard.COLT)); 			// Constraints (Money and Capacity)
+	Motemp=Motemp-Standard.supLT*Standard.COLT;																	// Update virtual available money
+	set("SLF",Fashion.supLT);	set("SLS",Standard.supLT);														// Display orders in the table
+}
+
+function getST(){																								//Get the Short Lead Time Order
+	Fashion.supST = getInput("CMD_SLT_FJ");																		// Get input value
+	Standard.supST= getInput("CMD_SLT_SJ");																		// Get input value
+	Custom.supST  = getInput("CMD_SLT_CJ");																		// Get input value
+	Custom.supST =Math.min(Custom.supST,Capa_ST,Math.floor(Motemp/Custom.COST));								// Constraints (Money and Capacity)	
+	Motemp=Motemp-Custom.supST*Custom.COST;																		// Update virtual available money
+	Fashion.supST =Math.min(Fashion.supST,Capa_ST-Custom.supST,Math.floor(Motemp/Fashion.COST));				// Constraints (Money and Capacity)
+	Motemp=Motemp-Fashion.supST*Fashion.COST;																	// Update virtual available money
+	Standard.supST=Math.min(Standard.supST,Capa_ST-Custom.supST-Fashion.supST,Math.floor(Motemp/Standard.COST));// Constraints (Money and Capacity)
+	Motemp=Motemp-Standard.supST*Standard.COST;																	// Update virtual available money
+	set("SSF",Fashion.supST);		set("SSS",Standard.supST);													// Display the supply for each jacket
+}
+
+
+function texte(x){
+if(textblock==0){
+	if(x==0) {Ht="";}
+	if(x==1) {Ht="You are a ski jacket retailer. \nYou sell 2 different models, one is fashionable, overstock at the end of a season is lost.\nThe other one is standard, overstock can be stored (at a cost of 5 per unit) and sold on next season.\nYou can choose to produce on your own local factory, or to outsource offshore.\nDemand is only known after the season has started.\nManage your local capacity (and associated fixed costs) before.\nOffshore, you must order 4 months before the season beginning, so with unknown demand.\nLocally you produce during the season, with a known demand.\nExpected Demand: \n Standard jacket 204 \n Fashion jacket 120\nMedian Demand: \n Standard jacket 200 \n Fashion jacket 100\n";}
+	if(x==3) {Ht="!! Breaking News !!  \nThere was a major quality problem, and the entire period's offshore production has been lost. \nAlso, the marketing department determined there is a demand for highly profitable custom products this season. \n Variable Cost: 30 \n Selling Price: 200";}
+	if(x==5) {Ht="No luck ! It looks like we under-estimated the demand for the M sized jackets and over-estimated the demand for the XL sized jackets. \n20% of the Standard jackets you ordered offshore goes to stock, and you have a special demand for M-sized jackets. \nThe clients are ready to pay 200 per unit if they can have it now.";}
+	if(x==11){Ht="Place your offshore orders for both of the jackets.\nThe cost per unit for each is indicated in the \"Offshore\" box (top left).\nYou do not know the precise demand, you only have information about its mean and median.\nAlso, you can MANAGE YOUR LOCAL CAPACITY, the production capacity you will have in period 2.\nIncreasing capacity just adds fixed costs, but getting rid of capacity is quite expensive.\nIncrease or Decrease it using the orange clicable boxes.\nBe careful: the capacity is the TOTAL number of jackets you can produce (Fashion+Standard)\nPress the [Enter] key of your keyboard (or the validate button) to validate your choices.\n";}
+	if(x==12){Ht="Place your local orders for both of the jackets.\nThe cost per unit for each is indicated in the \"Local\" box (top right).\nNotice that you now know the demand (second line of the central table or \"Shop\" box).\nYou can then complete your LLT orders to meet the demand.\nBut your local capacity is limited to what you chose in period 1.\nPress the [Enter] key of your keyboard (or the validate button) to validate your choices.\n";}
+	if(x==13){Ht="You can now analyze the full result of the season in the table.\nPress the [Enter] key of your keyboard (or click on the clock) to start a new season.\n";}
+	if(x==14){Ht="Think twice about the margins you make on each of the 2 products. Which one should be your priority ?\nConsider what you lose by ordering without knowing the demand.\nConsider the increase of your local capacity as an investment to improve your flexibility & reduce your mismatch costs.\n";}
+	if(x==15){Ht="Expected Demand: \n Standard jacket 204 \n Fashion jacket 120\nMedian Demand: \n Standard jacket 200 \n Fashion jacket 100\n";}
+	if(x==16){Ht="Our accountant has re-done the calculations, and found an extra cost of 3euros per unit ordered offshore.";}
+	if(x==17){Ht="Carbon footprint explaination: \nA container weights 2.3 tons empty \nLet's add 500kg of merchandise \n2.8 tons from Shangai to Europe = 920kg of CO2 \nFor 1 unit it's 1.84 kg of CO2 \nhttp://www.airshed.co.nz/for-business/sea-freight-emissions ";}
+	document.getElementById("txtarea").value= Ht;
+}}
+
+
+function event(x){
+
+	if(x<2){			//Display the explanation text for each period during the first year
+		if(period==1){texte(11);}			// Explainations about long  lead time order
+		if(period==2){texte(12);}			// Explainations about short lead time order
+		if(period==3){texte(13);}			// Explainations about results
+	}
+
+	if(x==15){			//Sinkage event
+		if(period==2){
+			Temp_LT_FJ=Fashion.supLT;  Fashion.supLT =0; set("SLF",Fashion.supLT);	// Set the Fashion  offshore supply to 0 but keep the order in memory for costs calculation 
+			Temp_LT_SJ=Standard.supLT; Standard.supLT=0; set("SLS",Standard.supLT);	// Set the Standard offshore supply to 0 but keep the order in memory for costs calculation 
+			texte(3);																// Display the text explaining the event
+			textblock=1;															// Prevent the text from being switched, to be sure the player gets the info
+			set("SLTo",INP5);														// Replace the SLT Input by the one with the Custom order input		
+			set("NAC","Custom");													// Display the Custom title appear in the main Table
+			Custom.demand=60; set("DEC",Custom.demand);								// Set and display the Custom demand
+		}
+		
+		if(period==3){
+			Custom.CostCalc();															// Launch the calculations for Custom jackets
+			Fsunk=Math.round(Temp_LT_FJ*Fashion.COLT);									// Cost of the lost Fashion  jackets
+			Ssunk=Math.round(Temp_LT_SJ*Standard.COLT);									// Cost of the lost Standard jackets
+			Fashion.costLT +=Fsunk; Fashion.totcost +=Fsunk; Fashion.result -=Fsunk;	// Correction of the costs and results for Fashion
+			Standard.costLT+=Ssunk; Standard.totcost+=Ssunk; Standard.result-=Ssunk;	// Correction of the costs and results for Standard
+			SetTableCustom();															// Display the custom column in the main table
+		}
+	}
+	
+	if(x==8){		//Missizing
+		if(period==2){
+			XLSized=Math.round(Standard.supLT*0.2); 					// Determine the number of Standard jackets that won't be sold because of misssize
+			Standard.supLT-=XLSized;									// Substract this number to the offshore order
+			set("SLS",Standard.supLT);									// Update the display of the offshore order
+			texte(5);													// Display the text explaining the event
+			textblock=1;												// Prevent the text from being switched, to be sure the player gets the info
+			set("SLTo",INP5);											// Replace the SLT Input by the one with the Custom order input	
+			set("NAME","M-sized Jackets");								// Replace the "custom" title by "M-sized" in the order input
+			set("NAC","M-sized");										// Display the Custom title appear in the main Table
+			Custom.demand=20; set("DEC",Custom.demand);					// Set and display the Custom demand
+		}
+		
+		if(period==3){
+			Custom.CostCalc();											// Launch the calculations for Custom jackets
+			Standard.stock+=XLSized;									// Put the missized Standard jackets back into stock
+			SetTableCustom();											// Display the custom column in the main table
+		}
+	}
+	
+	if(x==13){		//Accountability correction
+		if(period==3){
+			texte(16);					// Display the text explaining the event
+			Money-=SurplusCost;			// Substract the overcost (saved from each turn) directly to the money
+		}
+	}
+}
+
+
+function step1(){	//Long Lead Time Order
+	set("LLTo",INP1);										// Display the order interface
+	ClearTable();											// Clear the main table as the new season start
+	texte(0);												// Clear the textbox as the new season start
+	event(year);											// Call event function to trigger any year-specific action
+}
+
+function step2(){	//Short Lead Time Order
+	set("SLTo",INP2);																				// Display the order interface
+	Fashion.GetDemand(); 	if(Limited==1)	{Fashion.demand =DF[year];} set("DEF",Fashion.demand);	// Generate Fashion  jacket demand
+	Standard.GetDemand();	if(Limited==1)	{Standard.demand=DS[year];} set("DES",Standard.demand);	// Generate Standard jacket demand
+	HeadTab();																						// Update demand info in the head table
+	event(year);																					// Call event function to trigger any year-specific action
+}
+
+function step3(){	//Calculation and Results
+	if(Limited==1)	{Record();}								// Launch the parameters record if we're in Limited mode
+	set("CENTER",INP3);										// Display the validate button
+	Standard.Sales();										// Availability calculation for Standard jackets
+	Fashion.Sales();										// Availability calculation for Fashion  jackets
+	Custom.Sales();											// Availability calculation for Custom   jackets
+	Standard.StockMGMT();									// Manage the Standard jacket stock
+	Standard.CostCalc();									// Cost calculation for Standard jackets 
+	Fashion.CostCalc();										// Cost calculation for Fashion  jackets
+	Sustainability();										// Compute eco-indicators, carbon footprint, lost units and overcosts
+	event(year);											// Call event function to trigger any year-specific action
+	Money+=Standard.result+Fashion.result+Custom.result;	// Compute global monetary result
+	SetTable(); 											// Display the results in the Main table
+}
+
+
+
+function drawShape(){  														// Graphic animations
+	ctx3 = document.getElementById('canvas3').getContext('2d');				// Canvas selection
+	w=document.getElementById('canvas3').width;								// Canvas width for drawing reference
+	h=document.getElementById('canvas3').height;							// Canvas height for drawing reference
+	Clean(ctx3,w,h);														// Clear canvas
+	ctx3.fillStyle = "lightskyblue";										// Sea color
+	Rectangle(ctx3,0,h*0.8,w,h*0.2);										// Sea drawing
+	ctx3.fillStyle = "#003754";												// Boat color
+	if(xboat>w*0.7){dir=-0.5;}	if(xboat<w*0.1){dir=0.5;}	xboat+=dir;		// Rythm for boat coordinates
+	Boat(ctx3,w,h);															// Boat drawing
+	
+	ctx4 = document.getElementById('canvas4').getContext('2d');				// Canvas selection
+	w=document.getElementById('canvas4').width;								// Canvas width for drawing reference
+	h=document.getElementById('canvas4').height;							// Canvas height for drawing reference
+	Clean(ctx4,w,h);														// Clear canvas
+	ctx4.fillStyle = "black";												// Carrier color
+	Rectangle(ctx4,0,h*0.8,w,h*0.2);										// Carrier drawing
+	ctx4.fillStyle = "#003754";												// Parcel color
+	xparcel-=0.5; if(xparcel<-w*0.2){xparcel=w;}							// Rythm for parcel coordinates
+	Rectangle(ctx4,xparcel,h*0.6,w*0.2,h*0.2);								// Parcel drawing
+	requestAnimationFrame(drawShape);										// Animation loop
+	
+	if(year>15 && Limited==1){Over();}										// Game over trigger in Limited mode 
+}
+
+
+</script></head>
+<body onload="init();">
+
+<table>
+<tr><table><tr style="background-color:#003754;color:white"><td style="font-size:2em;">Lead Time Manager</td><td style="font-size:0.8em; text-align:left;">Design & Code : Jordi Weiss  <br>  Based on "Operations Management" by Prof. Suzanne de Treville <br> Universite de Lausanne</td></tr></table><div id="Test"></tr>
+<tr><table>
+	<tr>
+	<td><br><table class="demo">
+		<tr><td style="border-top:1px solid #FFF; border-left:1px solid #FFF;"></td><td>Fashion</td><td>Standard</td></tr>
+		<tr><td>Cost/Unit</td>	<td><span id="HLF"></span></td><td><span id="HLS"></span></td></tr>
+		<tr><td>Capacity</td>	<td colspan="2"><span id="HLC"></span></td></tr>
+		<tr style="background-color:#003754;color:white"><td colspan="3">Offshore</td></tr>
+	</table></td>
+	
+	<td style="width:16%"><br><table >
+		<tr><td style="font-size:0.9em; color:LimeGreen; text-align:left;">Carbon Footprint: <span id="CAR"></span></td></tr>
+		<tr><td style="font-size:0.9em; color:LimeGreen; text-align:left;">Wasted Units: 	 <span id="WAS"></span></td></tr>
+		<tr><td id="can3"></td></tr>
+	</table></td>
+	
+	<td><br><table class="demo">
+		<tr></tr>
+		<tr><td style="border-top:1px solid #FFF; border-left:1px solid #FFF;"></td><td>Fashion</td><td>Standard</td></tr>
+		<tr><td>Price</td>	<td><span id="HPF"></span></td><td><span id="HPS"></span></td></tr>
+		<tr><td>Demand</td>	<td><span id="HDF"></span></td><td><span id="HDS"></span></td></tr>
+		<tr style="background-color:#003754;color:white"><td colspan="3">Shop</td></tr>
+	</table></td>
+	
+	<td style="width:8%"><br><table>
+		<tr><td></td></tr>
+		<tr><td></td></tr>
+		<tr><td><span id="can4"> </span></td></tr>
+	</table></td>
+	
+	<td><table class="demo">
+		<tr><td style="border-top:1px solid #FFF; border-left:1px solid #FFF;"></td><td>Fashion</td><td>Standard</td></tr>
+		<tr><td>Var.Costs</td><td><span id="HS1"></span></td><td><span id="HS2"></span></td></tr>
+		<tr><td>Fix.Costs</td><td><span id="HS3"></span></td><td><span id="HS4"></span></td></tr>
+		<tr><td>Capacity</td><td colspan="2"><span id="HSC"></span></td></tr>
+		<tr style="background-color:#003754;color:white"><td colspan="3">Local</td></tr>
+	</table></td>
+	</tr></table><tr>
+	<tr><table>
+	
+
+	<tr style="height:125px">  <!-- Magic Input Line avec les input et consignes qui apparaissent -->
+		<td style="width:40%"><span id="LLTo">  </span></td>
+		<td style="width:30%"><span id="CENTER"></span></td>
+		<td style="width:30%"><span id="SLTo">  </span></td>
+	</tr>
+	
+</table></tr>
+
+
+
+<tr><table>
+	<tr >
+	<td style="width:40%;">
+			<table class="maintab" >
+			<tr><td style="width:43%"><b>Results Year: </b><span id="LSD"></span> (period <span id="BSD"></span>)</td>	<td style="width:37%">Fashion </span><div class="f3" id="NAC"></div></td>	<td style="width:20%">Standard</td></tr>
+			<tr><td>Demand	</td>			<td><span id="DEF"></span><div class="f3" id="DEC"></div></td>	<td><span id="DES"></span></td></tr>
+			<tr><td>Stock	</td>			<td><span id="STF"></span></td>									<td><span id="STS"></span></td></tr>
+			<tr><td>Supply LLT</td>			<td><span id="SLF"></span></td>									<td><span id="SLS"></span></td></tr>
+			<tr><td>Supply SLT</td>			<td><span id="SSF"></span><div class="f3" id="SSC"></div></td>	<td><span id="SSS"></span></td></tr>
+			<tr><td>Available</td>			<td><span id="AVF"></span><div class="f3" id="AVC"></div></td>	<td><span id="AVS"></span></td></tr>
+			<tr><td>Sold</td>				<td><span id="SOF"></span><span id="SDF"></span><div class="f3" id="SOC"></div></td>	<td><span id="SOS"></span> <span id="SDS"></span></td></tr>
+			<tr><td>Fixed Costs</td>		<td style="text-align:center" colspan="2"><span id="FCF"></span></td></tr>
+			<tr><td>Storage Costs</td>		<td></td>														<td><span id="SCS"></span></td></tr>
+			<tr><td>Costs LLT</td>			<td><span id="CLF"></span></td>									<td><span id="CLS"></span></td></tr>
+			<tr><td>Costs SLT</td>			<td><span id="CSF"></span><div class="f3" id="CSC"></div></td>	<td><span id="CSS"></span></td></tr>
+			<tr><td>Total Costs</td>		<td><span id="TCF"></span><div class="f3" id="TCC"></div></td>	<td><span id="TCS"></span></td></tr>
+			<tr><td>Result</td>				<td><span id="REF"></span><div class="f3" id="REC"></div></td>	<td><span id="RES"></span></td></tr>
+			<tr><td>Money</td>				<td colspan="2"><div class="f2" id="MON"></div></td></tr>
+			</table>
+	</td>
+	
+	<td style="width:10%;"></td>
+	
+	<td style="text-align:left; "> 
+			<form name="form1"><textarea id="txtarea"  rows="13" cols="60" style="border: 1px solid black"></textarea><br></form>     
+			<input type=button	class="bout1" value="Intro"		onmouseover="texte(1);" > 
+			<input type=button 	class="bout1" value="Period1"  	onmouseover="texte(11);"> 
+			<input type=button 	class="bout1" value="Period2"  	onmouseover="texte(12);"> 
+			<input type=button 	class="bout1" value="Period3"  	onmouseover="texte(13);"> 
+			<input type=button 	class="bout1" value="Advices"  	onmouseover="texte(14);"> 
+			<input type=button 	class="bout1" value="Demand"   	onmouseover="texte(15);"> 
+			<input type=button 	class="bout1" value="Carbon"   	onmouseover="texte(17);"> 
+	</td>
+	</tr>
+</table></tr>
+
+
+</table>
+</div>
+</body> 
