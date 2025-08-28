@@ -1,6 +1,8 @@
 # Lead-Time-Manager
 v. 2015.10.25
+
 Design & code by Dr. Jordi Weiss.
+
 Based on the "Operations Management" course by Prof. Suzanne de Treville at the University of Lausanne around 2015 to 2022.
 
 This simulation-game illustrate our research insights about the impact of lead time reduction on volatility exposure and cost of mismatch between supply and demand.
